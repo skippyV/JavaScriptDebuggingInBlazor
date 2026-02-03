@@ -1,0 +1,69 @@
+﻿@page "/JavaScriptTest"
+@rendermode InteractiveServer
+
+@implements IAsyncDisposable
+@inject IJSRuntime iJS
+
+<PageTitle>JS Collocation 2</PageTitle>
+
+<h1>JS Collocation Example 2</h1>
+
+<button @onclick="ShowPrompt">Call showPrompt2</button>
+
+@if (!string.IsNullOrEmpty(resultString))
+{
+    <p>
+        Hello @resultString!
+    </p>
+}
+
+<p>
+    <button id="btnId">Click Me!</button>
+</p>
+
+@code {
+    // https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/?view=aspnetcore-10.0
+    // https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/location-of-javascript?view=aspnetcore-10.0
+
+    private IJSObjectReference? jsModule;
+    private string? resultString;
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            /*
+                Change the {PATH} placeholder in the next line to the path of
+                the collocated JS file in the app. 
+            */
+            jsModule = await iJS.InvokeAsync<IJSObjectReference>("import",
+                "./Components/Pages/JavaScriptTest.razor.js");
+
+            await jsModule.InvokeVoidAsync("addHandlers");  // 2nd test of preferred? way
+        }
+    }
+
+    public async Task ShowPrompt()
+    {
+        if (jsModule is not null)
+        {
+            resultString = await jsModule.InvokeAsync<string>(
+                "showPrompt2", "What's your name?");
+            StateHasChanged();
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (jsModule is not null)
+        {
+            try
+            {
+                await jsModule.DisposeAsync();
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+        }
+    }
+
+}
