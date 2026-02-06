@@ -4,26 +4,31 @@
 @implements IAsyncDisposable
 @inject IJSRuntime iJS
 
-<PageTitle>JS Collocation 2</PageTitle>
-
-<h1>JS Collocation Example 2</h1>
-
-<button @onclick="ShowPrompt2">Call showPrompt2</button>
-
-@if (!string.IsNullOrEmpty(resultString))
+<button @onclick="ShowPromptExample1">Call ShowPromptExample1 (not working)</button>
+@if (!string.IsNullOrEmpty(resultShowPromptExample1))
 {
     <p>
-        Hello @resultString!
+        Prompt Ex1 result: @resultShowPromptExample1!
     </p>
 }
+<br />
+<p></p>
+<button @onclick="ShowPromptExample2">Call ShowPromptExample2</button>
 
+@if (!string.IsNullOrEmpty(resultShowPromptExample2))
+{
+    <p>
+        ShowPromptEx2 result: @resultShowPromptExample2!
+    </p>
+}
+<p></p>
 <p>
     <button id="btnId">Click Me!</button>
 </p>
 
 <p>
-    <button @onclick="TestImage">
-        Update heading
+    <button @onclick="SetImageSourceWithJavaScript">
+        Set Image Source
     </button>
 </p>
 
@@ -32,7 +37,11 @@
 </div>
 
 
+
+
 @code {
+    // https://learn.microsoft.com/en-us/aspnet/core/blazor/images-and-documents?view=aspnetcore-10.0
+
     // https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/?view=aspnetcore-10.0
     // https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/location-of-javascript?view=aspnetcore-10.0
 
@@ -50,29 +59,56 @@
     }
 
     private IJSObjectReference? jsModule;
-    private string? resultString;
+    private string? resultShowPromptExample2;
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
             /*
             Change the {PATH} placeholder in the next line to the path of
-            the collocated JS file in the app. 
+            the collocated JS file in the app.
             */
-    jsModule = await iJS.InvokeAsync<IJSObjectReference>("import",
-        "./Components/Pages/JavaScriptTest.razor.js");
+            jsModule = await iJS.InvokeAsync<IJSObjectReference>("import",
+               "./Components/Pages/JavaScriptTest.razor.js");
 
-            await jsModule.InvokeVoidAsync("addHandlers");  // 2nd test of preferred? way
-        }
+               await jsModule.InvokeVoidAsync("addHandlers");  // 3rd example adding to click button handler
+    }
     }
 
-    private async Task ShowPrompt2()
+    private string? resultShowPromptExample1;
+    public async Task ShowPromptExample1()
     {
-        if (jsModule is not null)
+        // This example from
+        // https://learn.microsoft.com/en-us/aspnet/core/blazor/javascript-interoperability/location-of-javascript?view=aspnetcore-10.0
+        // directs us to add the JS script inclusion from App.razor
+        //   <script src="Components/Pages/JavaScriptTest.razor.js"></script>
+        // But the function was not resolved for me. :(
+        try
         {
-            resultString = await jsModule.InvokeAsync<string>(
-                "showPrompt2", "What's your name?");
-            StateHasChanged();
+            resultShowPromptExample1 = await iJS.InvokeAsync<string>("showPromptEx1", "enter something:");
+            StateHasChanged();         
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+
+    }
+
+    private async Task ShowPromptExample2()
+    {
+        try
+        {
+            if (jsModule is not null)
+            {
+                resultShowPromptExample2 = await jsModule.InvokeAsync<string>(
+                    "showPromptEx2", "What's your name?");
+                StateHasChanged();
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
         }
     }
 
@@ -92,9 +128,21 @@
 
     private ElementReference imageElement;
 
-    private async Task TestImage()
+    private async Task SetImageSourceWithJavaScript()
     {
-        await jsModule.InvokeVoidAsync("interopFunctions.setImageSource", imageElement, bytesOfExampleImgFromString, "image/jpg");
-       // await jsModule.InvokeVoidAsync("interopFunctions.setImageSource", imageElement, bytesOfExampleImgFromString, "image/png");
+        if (jsModule is not null)
+        {
+            try
+            {
+                //await jsModule.InvokeVoidAsync("interopFunctions.setImageSource", imageElement, bytesOfExampleImgFromString, "image/jpg");
+                // await jsModule.InvokeVoidAsync("interopFunctions.setImageSource", imageElement, bytesOfExampleImgFromString, "image/png");
+
+                await jsModule.InvokeVoidAsync("setImageSource", "avatar", bytesOfExampleImgFromString, "image/jpg");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
     }
 }

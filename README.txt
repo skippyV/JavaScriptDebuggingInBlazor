@@ -6,9 +6,16 @@ Specifically, I am unable to hit a breakpoint in JavaScript loaded from a Blazor
 The JS functions, themselves, appear to work as expected.
 I have ScriptDebugging Enabled in Visual Studio.
 
-If I place a "debugger;"  statement within the JS code, then VS will
-throw up a dynamic page, that uses the source, to bring you to that 
-code loaded in memory - and stops on that debugger statement. But if I try to
-set a breakpoint in that dynamic page and press Continue, the debugger
-just keeps hitting null exceptions.
+I had no luck adding the script to the App.razor file. That approach always
+wound up with function not resolved.
+
+So load JS module in OnAfterRenderAsync, and using that approach 
+got the example JS code working. But then I couldn't get breakpoints 
+to break into JS UNLESS I added a "debugger;"  statement within the JS code.
+Then VS will throw up a dynamic page, and allow me to add and use breakpoints in JS.
+
+
+References:
+https://stackoverflow.com/questions/79882162/javascript-breakpoints-are-never-hit-while-debugging-blazor-web-app-net-10
+https://stackoverflow.com/questions/10573819/debug-javascript-in-asp-net
  
